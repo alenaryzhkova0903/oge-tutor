@@ -5,7 +5,19 @@ export interface Profile {
   id: string
   full_name: string
   role: Role
+  notes: string | null
   created_at: string
+}
+
+export interface Assignment {
+  id: string
+  tutor_id: string
+  student_id: string
+  task_id: string
+  due_date: string | null
+  is_done: boolean
+  created_at: string
+  task?: Task
 }
 
 export interface Task {

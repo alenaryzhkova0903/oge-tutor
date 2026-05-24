@@ -29,7 +29,8 @@ export default function NavBar({ role }: NavBarProps) {
         ) : (
           <>
             <Link href="/practice" className="text-sm text-gray-500 hover:text-gray-900 shrink-0">Практика</Link>
-            <Link href="/exam" className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0">Экзамен</Link>
+            <Link href="/homework" className="text-sm text-gray-500 hover:text-gray-900 shrink-0">Домашнее</Link>
+            <Link href="/exam" className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0 hidden sm:inline">Экзамен</Link>
             <Link href="/progress" className="text-sm text-gray-500 hover:text-gray-900 shrink-0 hidden sm:inline">Прогресс</Link>
           </>
         )}
