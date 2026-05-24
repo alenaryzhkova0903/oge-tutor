@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { TOPIC_LABELS, type Task } from '@/lib/types'
 import NavBar from '@/components/NavBar'
+import Formula from '@/components/Formula'
 
 type State = 'answering' | 'correct' | 'wrong'
 
@@ -112,7 +113,9 @@ export default function TaskPage() {
             </div>
           )}
 
-          <p className="text-lg text-gray-900 leading-relaxed mb-6">{task.question_text}</p>
+          <p className="text-lg text-gray-900 leading-relaxed mb-6">
+            <Formula>{task.question_text}</Formula>
+          </p>
 
           {/* Правильный ответ — всегда виден репетитору */}
           {isTutor && (
