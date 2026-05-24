@@ -14,6 +14,8 @@ import {
   type Assignment,
 } from '@/lib/types'
 import NavBar from '@/components/NavBar'
+import ProgressChart, { buildChartData } from '@/components/ProgressChart'
+import TaskHeatmap, { buildHeatmapData } from '@/components/TaskHeatmap'
 
 export default function StudentDetailPage() {
   const router = useRouter()
@@ -27,6 +29,8 @@ export default function StudentDetailPage() {
   const [notesSaved, setNotesSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [tutorId, setTutorId] = useState('')
+  const [chartData, setChartData] = useState<ReturnType<typeof buildChartData>>([])
+  const [heatmapData, setHeatmapData] = useState<ReturnType<typeof buildHeatmapData>>([])
 
   // Assign panel
   const [showAssign, setShowAssign] = useState(false)
@@ -60,7 +64,11 @@ export default function StudentDetailPage() {
     if (!tasks || !attempts) { setLoading(false); return }
 
     const taskMap: Record<string, { topic: string; question_text: string }> = {}
-    ;(tasks as Task[]).forEach((t) => { taskMap[t.id] = { topic: t.topic, question_text: t.question_text } })
+    const numMap: Record<string, number> = {}
+    ;(tasks as Task[]).forEach((t) => {
+      taskMap[t.id] = { topic: t.topic, question_text: t.question_text }
+      numMap[t.id] = t.oge_task_number
+    })
 
     const acc: Record<string, { total: number; correct: number }> = {}
     Object.keys(TOPIC_LABELS).forEach((topic) => { acc[topic] = { total: 0, correct: 0 } })
@@ -83,6 +91,8 @@ export default function StudentDetailPage() {
         question_text: taskMap[a.task_id]?.question_text ?? '—',
       }))
     )
+    setChartData(buildChartData(attempts as { created_at: string; is_correct: boolean }[]))
+    setHeatmapData(buildHeatmapData(attempts as { task_id: string; is_correct: boolean }[], numMap))
     setLoading(false)
   }, [id, router])
 
@@ -241,6 +251,16 @@ export default function StudentDetailPage() {
               })}
             </div>
           )}
+        </div>
+
+        {/* Charts */}
+        <div className="bg-white border rounded-2xl p-5 mb-5">
+          <h2 className="text-base font-semibold mb-3">Активность за 14 дней</h2>
+          <ProgressChart data={chartData} />
+        </div>
+        <div className="bg-white border rounded-2xl p-5 mb-5">
+          <h2 className="text-base font-semibold mb-3">Карта заданий (1–25)</h2>
+          <TaskHeatmap stats={heatmapData} />
         </div>
 
         {/* Recommendations */}
