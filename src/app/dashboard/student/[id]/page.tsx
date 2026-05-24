@@ -31,6 +31,8 @@ export default function StudentDetailPage() {
   const [tutorId, setTutorId] = useState('')
   const [chartData, setChartData] = useState<ReturnType<typeof buildChartData>>([])
   const [heatmapData, setHeatmapData] = useState<ReturnType<typeof buildHeatmapData>>([])
+  const [reminding, setReminding] = useState(false)
+  const [reminded, setReminded] = useState(false)
 
   // Assign panel
   const [showAssign, setShowAssign] = useState(false)
@@ -120,6 +122,37 @@ export default function StudentDetailPage() {
     setAssigning(null)
   }
 
+  async function sendReminder() {
+    setReminding(true)
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('push_subscriptions')
+      .select('subscription')
+      .eq('user_id', id)
+      .single() as { data: { subscription: object } | null }
+
+    if (!data?.subscription) {
+      alert('Ученик ещё не включил уведомления')
+      setReminding(false)
+      return
+    }
+
+    await fetch('/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subscription: data.subscription,
+        title: 'Напоминание от репетитора',
+        body: `${student?.full_name ?? 'Привет'}! Не забудь позаниматься сегодня 📚`,
+        url: '/homework',
+      }),
+    })
+
+    setReminding(false)
+    setReminded(true)
+    setTimeout(() => setReminded(false), 3000)
+  }
+
   async function deleteAssignment(assignmentId: string) {
     const supabase = createClient()
     await supabase.from('assignments').delete().eq('id', assignmentId)
@@ -143,7 +176,17 @@ export default function StudentDetailPage() {
 
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold">{student.full_name}</h1>
-          <span className="text-xs text-gray-400">{student.id.slice(0, 8)}…</span>
+          <button
+            onClick={sendReminder}
+            disabled={reminding}
+            className={`text-sm px-3 py-1.5 rounded-lg transition font-medium ${
+              reminded
+                ? 'bg-green-100 text-green-700'
+                : 'bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200'
+            }`}
+          >
+            {reminded ? '✓ Отправлено' : reminding ? '…' : '🔔 Напомнить'}
+          </button>
         </div>
 
         {/* Notes */}

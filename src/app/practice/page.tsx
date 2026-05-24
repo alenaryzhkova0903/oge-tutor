@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { TOPIC_LABELS, type TopicStats, type Attempt, type Task } from '@/lib/types'
 import NavBar from '@/components/NavBar'
+import PushButton from '@/components/PushButton'
 
 interface DailyTask {
   id: string
@@ -20,6 +21,7 @@ export default function PracticePage() {
   const [stats, setStats] = useState<Record<string, TopicStats>>({})
   const [streak, setStreak] = useState(0)
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([])
+  const [userId, setUserId] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function PracticePage() {
 
       const profile = profileRes.data
       if (profile?.role === 'tutor') { router.replace('/dashboard'); return }
+      setUserId(session.user.id)
       setStreak(profile?.streak_days ?? 0)
 
       const { data: attempts } = attemptsRes
@@ -125,6 +128,13 @@ export default function PracticePage() {
               <p className="font-bold text-orange-800">{streak} {streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'} подряд!</p>
               <p className="text-xs text-orange-600">Так держать — занимайся каждый день</p>
             </div>
+          </div>
+        )}
+
+        {/* Push notifications */}
+        {userId && (
+          <div className="mb-4">
+            <PushButton userId={userId} />
           </div>
         )}
 
