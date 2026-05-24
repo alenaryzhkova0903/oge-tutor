@@ -18,6 +18,7 @@ export interface Task {
   correct_answer: string
   hint: string | null
   solution: string | null
+  image_url: string | null
   source: string | null
   created_at: string
 }

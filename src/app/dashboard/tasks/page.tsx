@@ -16,6 +16,7 @@ const EMPTY_FORM = {
   correct_answer: '',
   hint: '',
   solution: '',
+  image_url: '',
   source: '',
 }
 
@@ -64,6 +65,7 @@ export default function TasksPage() {
       correct_answer: form.correct_answer.trim(),
       hint: form.hint.trim() || null,
       solution: form.solution.trim() || null,
+      image_url: form.image_url.trim() || null,
       source: form.source.trim() || null,
     })
 
@@ -209,6 +211,20 @@ export default function TasksPage() {
               placeholder="3/4 + 1/6 = 9/12 + 2/12 = 11/12"
               className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Картинка — URL (необязательно)</label>
+            <input
+              type="url"
+              value={form.image_url}
+              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+              placeholder="https://..."
+              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {form.image_url && (
+              <img src={form.image_url} alt="preview" className="mt-2 max-h-32 rounded border border-gray-200 object-contain" />
+            )}
           </div>
 
           <div>

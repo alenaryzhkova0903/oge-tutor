@@ -102,6 +102,16 @@ export default function TaskPage() {
             </div>
           </div>
 
+          {task.image_url && (
+            <div className="mb-4 flex justify-center">
+              <img
+                src={task.image_url}
+                alt="Иллюстрация к задаче"
+                className="max-w-full max-h-64 rounded-lg border border-gray-100 object-contain"
+              />
+            </div>
+          )}
+
           <p className="text-lg text-gray-900 leading-relaxed mb-6">{task.question_text}</p>
 
           {/* Правильный ответ — всегда виден репетитору */}
