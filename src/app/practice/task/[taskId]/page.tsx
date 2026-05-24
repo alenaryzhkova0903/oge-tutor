@@ -7,8 +7,33 @@ import { createClient } from '@/lib/supabase'
 import { TOPIC_LABELS, type Task } from '@/lib/types'
 import NavBar from '@/components/NavBar'
 import Formula from '@/components/Formula'
+import MathKeyboard from '@/components/MathKeyboard'
 
 type State = 'answering' | 'correct' | 'wrong'
+
+async function updateStreak(userId: string) {
+  const supabase = createClient()
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('streak_days, last_practice_date')
+    .eq('id', userId)
+    .single() as { data: { streak_days: number; last_practice_date: string | null } | null }
+
+  if (!profile) return
+  if (profile.last_practice_date === today) return // уже практиковались сегодня
+
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const wasYesterday = profile.last_practice_date === yesterday.toISOString().slice(0, 10)
+  const newStreak = wasYesterday ? (profile.streak_days ?? 0) + 1 : 1
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('profiles') as any).update({
+    streak_days: newStreak,
+    last_practice_date: today,
+  }).eq('id', userId)
+}
 
 export default function TaskPage() {
   const router = useRouter()
@@ -21,6 +46,7 @@ export default function TaskPage() {
   const [userId, setUserId] = useState('')
   const [isTutor, setIsTutor] = useState(false)
   const startTime = useRef(Date.now())
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -59,6 +85,7 @@ export default function TaskPage() {
       time_spent_seconds: Math.round((Date.now() - startTime.current) / 1000),
     })
 
+    if (isCorrect) await updateStreak(userId)
     setState(isCorrect ? 'correct' : 'wrong')
   }
 
@@ -117,7 +144,6 @@ export default function TaskPage() {
             <Formula>{task.question_text}</Formula>
           </p>
 
-          {/* Правильный ответ — всегда виден репетитору */}
           {isTutor && (
             <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2 mb-4">
               <span className="text-xs text-purple-500 uppercase tracking-wide">Правильный ответ</span>
@@ -126,23 +152,26 @@ export default function TaskPage() {
           )}
 
           {!isTutor && state === 'answering' && (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Твой ответ"
-                autoFocus
-                inputMode="decimal"
-                className="flex-1 border rounded-lg px-4 py-3 text-base outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                disabled={!answer.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition disabled:opacity-40 text-base"
-              >
-                Ответить
-              </button>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Твой ответ"
+                  autoFocus
+                  className="flex-1 border rounded-lg px-4 py-3 text-base outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  disabled={!answer.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition disabled:opacity-40 text-base"
+                >
+                  Ответить
+                </button>
+              </div>
+              <MathKeyboard value={answer} onChange={setAnswer} inputRef={inputRef} />
             </form>
           )}
 
@@ -161,7 +190,6 @@ export default function TaskPage() {
           )}
         </div>
 
-        {/* Подсказка — только студенту во время ответа */}
         {task.hint && !isTutor && state === 'answering' && (
           <button
             onClick={() => setShowHint(!showHint)}
@@ -176,7 +204,6 @@ export default function TaskPage() {
           </div>
         )}
 
-        {/* Решение */}
         {task.solution && (isTutor || state !== 'answering') && (
           <button
             onClick={() => setShowSolution(!showSolution)}
@@ -191,7 +218,6 @@ export default function TaskPage() {
           </div>
         )}
 
-        {/* Подсказка репетитору видна всегда */}
         {task.hint && isTutor && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-3 mb-4 text-blue-800 text-sm">
             <span className="text-xs text-blue-400 uppercase tracking-wide block mb-1">Подсказка ученику</span>
@@ -199,7 +225,6 @@ export default function TaskPage() {
           </div>
         )}
 
-        {/* Кнопки после ответа — только для студента */}
         {!isTutor && state !== 'answering' && (
           <div className="flex flex-col sm:flex-row gap-3 mt-2">
             <button
